@@ -8,20 +8,20 @@ namespace Slic3r {
 
 void FillPlanePath::_fill_surface_single(
     unsigned int                     thickness_layers,
-    const direction_t               &direction, 
-    ExPolygon                       &expolygon, 
+    const direction_t               &direction,
+    ExPolygon                       &expolygon,
     Polylines*                      polylines_out)
 {
     expolygon.rotate(-direction.first);
 
     const coord_t distance_between_lines = scale_(this->min_spacing) / this->density;
-    
+
     // align infill across layers using the object's bounding box (if available)
     BoundingBox bounding_box = this->bounding_box.defined
         ? this->bounding_box
         : expolygon.contour.bounding_box();
     bounding_box = bounding_box.rotated(-direction.first);
-    
+
     const Point shift = this->_centered()
         ? bounding_box.center()
         : bounding_box.min;
@@ -43,14 +43,14 @@ void FillPlanePath::_fill_surface_single(
         polyline.points.reserve(pts.size());
         for (Pointfs::const_iterator it = pts.begin(); it != pts.end(); ++ it) {
             polyline.points.push_back(Point(
-                coord_t(floor(it->x * distance_between_lines + 0.5)), 
+                coord_t(floor(it->x * distance_between_lines + 0.5)),
                 coord_t(floor(it->y * distance_between_lines + 0.5))
             ));
         }
 //      polylines = intersection_pl(polylines_src, offset((Polygons)expolygon, scale_(0.02)));
         polylines = intersection_pl(polylines, (Polygons)expolygon);
 
-/*        
+/*
         if (1) {
             require "Slic3r/SVG.pm";
             print "Writing fill.svg\n";
@@ -63,7 +63,7 @@ void FillPlanePath::_fill_surface_single(
             );
         }
 */
-        
+
         // paths must be repositioned and rotated back
         for (Polylines::iterator it = polylines.begin(); it != polylines.end(); ++ it) {
             it->translate(shift.x, shift.y);
@@ -100,7 +100,7 @@ Pointfs FillArchimedeanChords::_generate(coord_t min_x, coord_t min_y, coord_t m
     return out;
 }
 
-// Adapted from 
+// Adapted from
 // http://cpansearch.perl.org/src/KRYDE/Math-PlanePath-122/lib/Math/PlanePath/HilbertCurve.pm
 //
 // state=0    3--2   plain
@@ -200,6 +200,36 @@ Pointfs FillOctagramSpiral::_generate(coord_t min_x, coord_t min_y, coord_t max_
         out.push_back(Pointf( rx, -r2));
         out.push_back(Pointf( rx, -rx));
         out.push_back(Pointf( r2+r_inc, -rx));
+    }
+    return out;
+}
+
+Pointfs FillHexagramSpiral::_generate(coord_t min_x, coord_t min_y, coord_t max_x, coord_t max_y)
+{
+    // Radius to achieve.
+    coordf_t rmax = std::sqrt(coordf_t(max_x)*coordf_t(max_x)+coordf_t(max_y)*coordf_t(max_y)) * std::sqrt(2.) + 1.5;
+    // Now unwind the spiral.
+    coordf_t r = 0;
+    coordf_t r_inc = sqrt(2.);
+    Pointfs out;
+    out.push_back(Pointf(0, 0));
+    while (r < rmax) {
+        r += r_inc;
+        coordf_t a = sqrt(3.) / 2 * r;
+        coordf_t s = r/2;
+        coordf_t rs = r + s;
+        out.push_back(Pointf( r,  0.));
+        out.push_back(Pointf( rs, a));
+        out.push_back(Pointf( s, a));
+        out.push_back(Pointf( 0, 2 * a));
+        out.push_back(Pointf(-s, a));
+        out.push_back(Pointf(-rs, a));
+        out.push_back(Pointf(-r,  0.));
+        out.push_back(Pointf(-rs, -a));
+        out.push_back(Pointf(-s, -a));
+        out.push_back(Pointf(0., -2 * a));
+        out.push_back(Pointf( s, -a));
+        out.push_back(Pointf( rs+r_inc, -a));
     }
     return out;
 }

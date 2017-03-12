@@ -21,19 +21,20 @@ Fill::new_from_type(const InfillPattern type)
         case ipConcentric:          return new FillConcentric();
         case ipHoneycomb:           return new FillHoneycomb();
         case ip3DHoneycomb:         return new Fill3DHoneycomb();
-        
+
         case ipRectilinear:         return new FillRectilinear();
         case ipAlignedRectilinear:  return new FillAlignedRectilinear();
         case ipGrid:                return new FillGrid();
-        
+
         case ipTriangles:           return new FillTriangles();
         case ipStars:               return new FillStars();
         case ipCubic:               return new FillCubic();
-        
+
         case ipArchimedeanChords:   return new FillArchimedeanChords();
         case ipHilbertCurve:        return new FillHilbertCurve();
         case ipOctagramSpiral:      return new FillOctagramSpiral();
-        
+        case ipHexagramSpiral:      return new FillHexagramSpiral();
+
         default: CONFESS("unknown type"); return NULL;
     }
 }
@@ -50,13 +51,13 @@ Polylines
 Fill::fill_surface(const Surface &surface)
 {
     if (this->density == 0) return Polylines();
-    
+
     // Perform offset.
     ExPolygons expp = offset_ex(surface.expolygon, -scale_(this->min_spacing)/2);
-    
+
     // Implementations can change this if they adjust the flow.
     this->_spacing = this->min_spacing;
-    
+
     // Create the infills for each of the regions.
     Polylines polylines_out;
     for (size_t i = 0; i < expp.size(); ++i)
@@ -71,7 +72,7 @@ Fill::fill_surface(const Surface &surface)
 
 // Calculate a new spacing to fill width with possibly integer number of lines,
 // the first and last line being centered at the interval ends.
-// This function possibly increases the spacing, never decreases, 
+// This function possibly increases the spacing, never decreases,
 // and for a narrow width the increase in spacing may become severe,
 // therefore the adjustment is limited to 20% increase.
 coord_t
@@ -81,21 +82,21 @@ Fill::adjust_solid_spacing(const coord_t width, const coord_t distance)
     assert(distance > 0);
     const int number_of_intervals = floor(width / distance);
     if (number_of_intervals == 0) return distance;
-    
+
     coord_t distance_new = (width / number_of_intervals);
-    
+
     const coordf_t factor = coordf_t(distance_new) / coordf_t(distance);
     assert(factor > 1. - 1e-5);
-    
+
     // How much could the extrusion width be increased? By 20%.
     // Because of this limit, this method is not idempotent: each run
     // will increment distance by 20%.
     const coordf_t factor_max = 1.2;
     if (factor > factor_max)
         distance_new = floor((double)distance * factor_max + 0.5);
-    
+
     assert((distance_new * number_of_intervals) <= width);
-    
+
     return distance_new;
 }
 

@@ -21,8 +21,8 @@ public:
 protected:
     virtual void _fill_surface_single(
         unsigned int                     thickness_layers,
-        const direction_t               &direction, 
-        ExPolygon                       &expolygon, 
+        const direction_t               &direction,
+        ExPolygon                       &expolygon,
         Polylines*                      polylines_out);
 
     virtual float _layer_angle(size_t idx) const { return 0.f; }
@@ -57,6 +57,17 @@ class FillOctagramSpiral : public FillPlanePath
 public:
     virtual Fill* clone() const { return new FillOctagramSpiral(*this); };
     virtual ~FillOctagramSpiral() {}
+
+protected:
+    virtual bool  _centered() const { return true; }
+    virtual Pointfs _generate(coord_t min_x, coord_t min_y, coord_t max_x, coord_t max_y);
+};
+
+class FillHexagramSpiral : public FillPlanePath
+{
+public:
+    virtual Fill* clone() const { return new FillHexagramSpiral(*this); };
+    virtual ~FillHexagramSpiral() {}
 
 protected:
     virtual bool  _centered() const { return true; }
